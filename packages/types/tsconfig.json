@@ -1,0 +1,7 @@
+{
+  "extends": "@veda-ai/config/tsconfig.base.json",
+  "compilerOptions": {
+    "rootDir": "."
+  },
+  "include": ["index.ts"]
+}
