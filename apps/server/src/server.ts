@@ -51,6 +51,11 @@ app.use('/api/assignments', assignmentRouter);
 app.use('/api/papers', paperRouter);
 app.use('/api/groups', groupRouter);
 
+// Root Endpoint (So Render doesn't show "Cannot GET /")
+app.get('/', (req, res) => {
+  res.send('VedaAI Backend is Live and Running!');
+});
+
 // Service Health check endpoint
 app.get('/health', (req, res) => {
   res.json({
