@@ -25,7 +25,15 @@ export default function Sidebar() {
     fetchUser();
   }, []);
 
-  const navItems = [
+  type NavItem = {
+    name: string;
+    href: string;
+    icon: React.ElementType;
+    matchPrefix: string;
+    badge?: string;
+  };
+
+  const navItems: NavItem[] = [
     { name: 'Assignments', href: '/dashboard', icon: FileText, matchPrefix: '/dashboard' },
     { name: 'My Groups', href: '/groups', icon: Users, matchPrefix: '/groups' },
   ];

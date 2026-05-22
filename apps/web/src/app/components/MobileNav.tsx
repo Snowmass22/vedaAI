@@ -6,7 +6,15 @@ import { Home, FileText, Library, Sparkles, LogOut, Users } from 'lucide-react';
 export default function MobileNav() {
   const pathname = usePathname();
 
-  const navItems = [
+  type NavItem = {
+    name: string;
+    href: string;
+    icon: React.ElementType;
+    matchPrefix?: string;
+    badge?: string;
+  };
+
+  const navItems: NavItem[] = [
     { name: 'Assignments', href: '/dashboard', icon: FileText, matchPrefix: '/dashboard' },
     { name: 'Groups', href: '/groups', icon: Users, matchPrefix: '/groups' },
     { name: 'Logout', href: '/login', icon: LogOut },
