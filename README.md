@@ -1,5 +1,8 @@
 # VedaAI: AI-Powered Assessment Creator
 
+frontend link: https://vedaai-frontend-4px2.onrender.com/
+backend link: https://vedaai-9td1.onrender.com/
+
 VedaAI is an innovative platform designed to help educators generate customized examination papers with ease. Leveraging the power of Google Gemini, it can create structured question papers, including multiple-choice, short-answer, long-answer, and true/false questions, complete with marking schemes. Users can also upload their own study materials (PDFs, text files) to provide context for question generation.
 
 ## Architecture Overview
