@@ -104,7 +104,7 @@ export const usePaperStore = create<PaperState & PaperActions>((set) => ({
       type: newPaper.sections[sectionIndex].title.toLowerCase().includes('multiple') ? 'mcq' : 'short',
       text: 'New manual question (click to edit)',
       marks: 1,
-      difficulty: 'medium',
+      difficulty: 'moderate',
       section: newPaper.sections[sectionIndex].title
     });
     return { paper: newPaper };
