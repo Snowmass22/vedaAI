@@ -58,8 +58,4 @@ VedaAI's approach to assessment generation is designed for robustness, flexibili
 5.  **Authentication & Authorization:**
     *   The system uses JWT (JSON Web Tokens) for secure user authentication and authorization across API endpoints and WebSocket connections.
 
-This comprehensive approach ensures that VedaAI delivers a reliable, feature-rich, and user-friendly experience for creating high-quality assessment papers.
-```
-<!--
-[PROMPT_SUGGESTION]Explain how to set up the development environment for this project, including Docker and Node.js dependencies.[/PROMPT_SUGGESTION]
-[PROMPT_SUGGESTION]Provide instructions on how to deploy this application to a cloud provider like Google Cloud Platform or AWS.[/PROMPT_SUGGESTION]
+ 
