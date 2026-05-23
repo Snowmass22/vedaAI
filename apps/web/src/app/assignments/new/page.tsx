@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAssignmentStore } from '@/store/assignmentStore';
 import AppLayout from '../../components/AppLayout';
-import { Upload, Calendar, Plus, X, Mic } from 'lucide-react';
+import { Upload, Calendar, Plus, X, Mic, CheckCircle, FileText, AlertCircle } from 'lucide-react';
 
 export default function NewAssignmentPage() {
   const router = useRouter();
@@ -14,6 +14,7 @@ export default function NewAssignmentPage() {
   // Use a local step state since we simplified to 2 steps: 1=Form, 2=Review
   const [localStep, setLocalStep] = useState(1);
   const [isListening, setIsListening] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   const totalQuestions = store.questionConfig.reduce((sum, item) => sum + (Number(item.count) || 0), 0);
   const totalMarks = store.questionConfig.reduce((sum, item) => sum + ((Number(item.count) || 0) * (Number(item.marks) || 0)), 0);
@@ -36,6 +37,10 @@ export default function NewAssignmentPage() {
     if (e.dataTransfer.files && e.dataTransfer.files[0]) {
       store.setFile(e.dataTransfer.files[0]);
     }
+  };
+
+  const handleRemoveFile = () => {
+    store.setFile(null);
   };
 
   const handleMicClick = () => {
@@ -96,12 +101,14 @@ export default function NewAssignmentPage() {
       }
     }
     
+    setSubmitError(null);
     setLocalStep(2);
   };
 
   const handleSubmit = async () => {
     setField('isSubmitting', true);
     setField('errors', {});
+    setSubmitError(null);
 
     try {
       const formData = new FormData();
@@ -133,20 +140,16 @@ export default function NewAssignmentPage() {
       if (result.status === 'success') {
         router.push(`/assignments/${result.assignmentId}/generating`);
       } else {
-        const backendErrors: Record<string, string> = {};
+        // Show the error on the review page instead of going back
         if (result.errors) {
-          result.errors.forEach((err: any) => {
-            backendErrors[err.field] = err.message;
-          });
+          const msgs = result.errors.map((err: any) => err.message).join(', ');
+          setSubmitError(msgs || 'Server rejected the assignment.');
         } else {
-          backendErrors.form = result.message || 'Server rejected assignment submission';
+          setSubmitError(result.message || 'Server rejected assignment submission.');
         }
-        store.setErrors(backendErrors);
-        setLocalStep(1); // Go back if error
       }
     } catch (error) {
-      store.setErrors({ form: 'Network request failed.' });
-      setLocalStep(1);
+      setSubmitError('Network request failed. Please check your connection and try again.');
     } finally {
       setField('isSubmitting', false);
     }
@@ -157,6 +160,12 @@ export default function NewAssignmentPage() {
     true_false: 'True / False Questions',
     short: 'Short Questions',
     long: 'Long Answer / Essay Questions'
+  };
+
+  const formatFileSize = (bytes: number): string => {
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
   };
 
   return (
@@ -188,25 +197,46 @@ export default function NewAssignmentPage() {
               <p className="text-sm text-gray-500 mb-6">Basic information about your assignment</p>
               
               {/* File Upload Box */}
-              <div 
-                className="border-2 border-dashed border-gray-300 rounded-2xl p-8 flex flex-col items-center justify-center text-center hover:bg-gray-50 transition-colors relative"
-                onDragOver={(e) => e.preventDefault()}
-                onDrop={handleDrop}
-              >
-                <input 
-                  type="file" 
-                  onChange={handleFileChange}
-                  accept=".pdf,.txt,.jpg,.png"
-                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                />
-                <Upload className="w-8 h-8 text-gray-400 mb-4" />
-                <p className="font-semibold text-gray-700 mb-1">Choose a file or drag & drop it here</p>
-                <p className="text-xs text-gray-400 mb-4">JPEG, PNG, upto 10MB</p>
-                <button type="button" className="px-4 py-1.5 border border-gray-200 rounded-full text-xs font-medium text-gray-600 bg-white">
-                  Browse Files
-                </button>
-              </div>
-              <p className="text-center text-xs text-gray-500 mt-3">Upload images of your preferred document/image</p>
+              {!store.file ? (
+                <div 
+                  className="border-2 border-dashed border-gray-300 rounded-2xl p-8 flex flex-col items-center justify-center text-center hover:bg-gray-50 transition-colors relative"
+                  onDragOver={(e) => e.preventDefault()}
+                  onDrop={handleDrop}
+                >
+                  <input 
+                    type="file" 
+                    onChange={handleFileChange}
+                    accept=".pdf,.txt,.jpg,.png"
+                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                  />
+                  <Upload className="w-8 h-8 text-gray-400 mb-4" />
+                  <p className="font-semibold text-gray-700 mb-1">Choose a file or drag & drop it here</p>
+                  <p className="text-xs text-gray-400 mb-4">PDF, TXT, JPEG, PNG — up to 10MB</p>
+                  <button type="button" className="px-4 py-1.5 border border-gray-200 rounded-full text-xs font-medium text-gray-600 bg-white">
+                    Browse Files
+                  </button>
+                </div>
+              ) : (
+                /* File Uploaded Confirmation */
+                <div className="border-2 border-emerald-200 bg-emerald-50 rounded-2xl p-6 flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-xl bg-emerald-100 flex items-center justify-center shrink-0">
+                    <CheckCircle className="w-6 h-6 text-emerald-600" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-semibold text-emerald-800 text-sm truncate">{store.file.name}</p>
+                    <p className="text-xs text-emerald-600 mt-0.5">{formatFileSize(store.file.size)} • Uploaded successfully</p>
+                  </div>
+                  <button 
+                    type="button"
+                    onClick={handleRemoveFile}
+                    className="p-2 text-gray-400 hover:text-rose-500 hover:bg-rose-50 rounded-full transition-colors shrink-0"
+                    title="Remove file"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              )}
+              <p className="text-center text-xs text-gray-500 mt-3">Upload images of your preferred document/image (optional)</p>
             </div>
 
             {/* Basic Info Row (Added to capture subject/grade/topic) */}
@@ -360,11 +390,32 @@ export default function NewAssignmentPage() {
           <div className="space-y-6">
             {/* Review Step Content */}
             <h2 className="text-xl font-bold text-gray-900">Review Summary</h2>
+
+            {/* Show error inline on the review page */}
+            {submitError && (
+              <div className="flex items-start gap-3 bg-rose-50 border border-rose-200 rounded-xl p-4">
+                <AlertCircle className="w-5 h-5 text-rose-500 shrink-0 mt-0.5" />
+                <div>
+                  <p className="text-sm font-semibold text-rose-700">Submission Failed</p>
+                  <p className="text-sm text-rose-600 mt-1">{submitError}</p>
+                </div>
+              </div>
+            )}
+
             <div className="bg-gray-50 rounded-xl p-6 space-y-4 border border-gray-100">
               <div>
                 <p className="text-xs font-bold text-gray-500 uppercase">Subject & Topic</p>
                 <p className="font-medium">{store.subject} — {store.topic} (Grade {store.grade})</p>
               </div>
+              {store.file && (
+                <div>
+                  <p className="text-xs font-bold text-gray-500 uppercase">Uploaded File</p>
+                  <div className="flex items-center gap-2 mt-1">
+                    <FileText className="w-4 h-4 text-emerald-600" />
+                    <p className="font-medium text-sm text-emerald-700">{store.file.name} ({formatFileSize(store.file.size)})</p>
+                  </div>
+                </div>
+              )}
               <div>
                 <p className="text-xs font-bold text-gray-500 uppercase">Questions Structure</p>
                 <ul className="mt-2 space-y-2">

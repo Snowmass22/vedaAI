@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { usePaperStore } from '@/store/paperStore';
 import AppLayout from '../../../components/AppLayout';
-import { Download, Check, CloudLightning, AlertCircle, GripVertical, Trash2, PlusCircle } from 'lucide-react';
+import { Download, Check, CloudLightning, AlertCircle, GripVertical, Trash2, PlusCircle, Printer } from 'lucide-react';
 import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
 
 export default function PaperPage({ params }: { params: Promise<{ id: string }> }) {
@@ -42,8 +42,6 @@ export default function PaperPage({ params }: { params: Promise<{ id: string }> 
   
   const [showMarkingScheme, setShowMarkingScheme] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const [isExporting, setIsExporting] = useState(false);
-  const [exportMessage, setExportMessage] = useState('');
   const [saveSuccess, setSaveSuccess] = useState(false);
 
   const [studentName, setStudentName] = useState('');
@@ -119,47 +117,9 @@ export default function PaperPage({ params }: { params: Promise<{ id: string }> 
     handleSaveChanges(usePaperStore.getState().paper);
   };
 
-  const handleDownloadPDF = async () => {
-    if (!paper || !paper._id) return;
-    setIsExporting(true);
-    setExportMessage('Queueing...');
-    try {
-      const apiHost = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
-      const response = await fetch(`${apiHost}/api/papers/${paper._id}/export`, { method: 'POST' });
-      const result = await response.json();
-      if (result.status === 'success') {
-        const jobId = result.jobId;
-        const pollInterval = setInterval(async () => {
-          setExportMessage('Rendering...');
-          const statusRes = await fetch(`${apiHost}/api/papers/${paper._id}/export/status/${jobId}`);
-          const statusData = await statusRes.json();
-          if (statusData.status === 'success') {
-            if (statusData.jobStatus === 'completed' && statusData.downloadUrl) {
-              clearInterval(pollInterval);
-              setExportMessage('Downloading...');
-              const anchor = document.createElement('a');
-              anchor.href = `${apiHost}${statusData.downloadUrl}`;
-              anchor.download = `${paper.title.replace(/\s+/g, '_')}.pdf`;
-              document.body.appendChild(anchor);
-              anchor.click();
-              document.body.removeChild(anchor);
-              setIsExporting(false);
-              setExportMessage('');
-            } else if (statusData.jobStatus === 'failed') {
-              clearInterval(pollInterval);
-              setIsExporting(false);
-              alert('PDF compilation failed.');
-            }
-          }
-        }, 1500);
-      } else {
-        setIsExporting(false);
-        alert('Failed to initialize export.');
-      }
-    } catch (err) {
-      setIsExporting(false);
-      alert('Export network error.');
-    }
+  // Client-side PDF download using browser's native print dialog
+  const handleDownloadPDF = () => {
+    window.print();
   };
 
   if (isLoading) return (
@@ -185,14 +145,9 @@ export default function PaperPage({ params }: { params: Promise<{ id: string }> 
           </p>
           <button 
             onClick={handleDownloadPDF}
-            disabled={isExporting}
             className="shrink-0 bg-white text-gray-900 hover:bg-gray-100 font-bold px-6 py-3 rounded-full flex items-center gap-2 text-sm transition-colors"
           >
-            {isExporting ? (
-              <><span className="w-4 h-4 border-2 border-gray-900 border-t-transparent rounded-full animate-spin" /> {exportMessage}</>
-            ) : (
-              <><Download className="w-4 h-4" /> Download as PDF</>
-            )}
+            <Printer className="w-4 h-4" /> Download as PDF
           </button>
         </div>
 
@@ -201,7 +156,7 @@ export default function PaperPage({ params }: { params: Promise<{ id: string }> 
           
           {/* Header */}
           <div className="text-center pb-8 border-b border-gray-300">
-            <h1 className="text-2xl md:text-3xl font-bold font-serif mb-2">{user ? user.institution : 'Delhi Public School, Sector-4, Bokaro'}</h1>
+            <h1 className="text-2xl md:text-3xl font-bold font-serif mb-2">{user ? user.institution : 'School Name'}</h1>
             <h2 className="text-lg font-medium mb-1">Subject: {paper.subject}</h2>
             <h2 className="text-lg font-medium mb-8">Class: {paper.grade}</h2>
 
@@ -216,7 +171,7 @@ export default function PaperPage({ params }: { params: Promise<{ id: string }> 
                     setPaper(updated);
                   }}
                   onBlur={() => handleSaveChanges(paper)}
-                  className="w-12 text-center border-b border-dashed border-gray-400 focus:outline-none"
+                  className="w-12 text-center border-b border-dashed border-gray-400 focus:outline-none no-print-border"
                 /> 
                 minutes
               </div>

@@ -58,4 +58,41 @@ router.get('/:id/messages', requireAuth, async (req: AuthRequest, res) => {
   }
 });
 
+// Add members to an existing group
+router.post('/:id/members', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { memberEmails } = req.body;
+    if (!memberEmails || !Array.isArray(memberEmails)) {
+      return res.status(400).json({ status: 'error', message: 'memberEmails array is required' });
+    }
+
+    const group = await GroupModel.findById(req.params.id);
+    if (!group) return res.status(404).json({ status: 'error', message: 'Group not found' });
+    
+    // Check if user is in the group
+    if (!group.members.includes(req.user!.id as any)) {
+      return res.status(403).json({ status: 'error', message: 'Not authorized for this group' });
+    }
+
+    const users = await UserModel.find({ email: { $in: memberEmails } });
+    let addedCount = 0;
+    
+    users.forEach(u => {
+      const uid = u._id.toString();
+      if (!group.members.includes(uid as any)) {
+        group.members.push(uid as any);
+        addedCount++;
+      }
+    });
+
+    if (addedCount > 0) {
+      await group.save();
+    }
+
+    res.json({ status: 'success', message: `Added ${addedCount} members`, group });
+  } catch (error) {
+    res.status(500).json({ status: 'error', message: 'Failed to add members' });
+  }
+});
+
 export const groupRouter = router;

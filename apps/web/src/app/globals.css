@@ -68,16 +68,35 @@ body {
     background: #ffffff !important;
     color: #000000 !important;
     font-size: 12pt !important;
+    margin: 0 !important;
+    padding: 0 !important;
   }
 
-  .no-print {
+  /* Hide all app chrome */
+  .no-print,
+  .sidebar-nav,
+  header,
+  nav,
+  aside {
     display: none !important;
+  }
+
+  /* Remove sidebar offset */
+  .lg\:ml-\[220px\] {
+    margin-left: 0 !important;
+  }
+
+  /* Remove page padding/bg */
+  main {
+    padding: 0 !important;
+    background: white !important;
   }
 
   .exam-paper {
     box-shadow: none !important;
     border: none !important;
-    padding: 0 !important;
+    border-radius: 0 !important;
+    padding: 10mm !important;
     margin: 0 !important;
     width: 100% !important;
   }
@@ -94,4 +113,17 @@ body {
     border-bottom: 1px solid #000000 !important;
     background: transparent !important;
   }
+
+  /* Hide drag handles and edit controls */
+  textarea {
+    border: none !important;
+    resize: none !important;
+  }
+
+  input[type="number"],
+  input[type="text"] {
+    border: none !important;
+    border-bottom: 1px solid #000 !important;
+  }
 }
+
